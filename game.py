@@ -11,11 +11,12 @@ class Game:
 
     def __init__(self):
         self.players = []
+        self.freezed = []
         self.player = None
         self.player_position = None
         self.dealer = Dealer("Dealer")
         self.all_players_count = 1
-        self.deck = Deck()
+        self.deck = None
         self.min_bet, self.max_bet = 5, 20
 
     @staticmethod
@@ -49,6 +50,8 @@ class Game:
 
     def ask_card(self):
         for player in self.players:
+            if player in self.freezed:
+                continue
             while player.ask_card():
                 print(f'{player.name} player take card ')
                 player.take_card(self.deck.get_card())
@@ -60,7 +63,7 @@ class Game:
                 if self.check_overload(player):
                     print(f'{player.name} player has overload')
                     time.sleep(2)
-                    self.remove_player(player)
+                    self.freeze_player(player)
                     break
 
     def first_deal(self):
@@ -72,6 +75,13 @@ class Game:
         print('Dealer has first card: ')
         time.sleep(1)
         self.dealer.show_hand()
+
+    def freeze_player(self, player):
+        if player in self.players:
+            self.freezed.append(player)
+
+    def clean_freeze(self):
+        self.freezed = []
 
     def remove_player(self, player):
         if player in self.players:
@@ -89,10 +99,13 @@ class Game:
             time.sleep(1)
 
             for player in self.players:
-                player.balance += player.bet * 2
-                print('All players win')
+                if player not in self.freezed:
+                    player.balance += player.bet * 2
+            print('All not overloaded players win')
         else:
             for player in self.players:
+                if player in self.freezed:
+                    continue
                 if player.points > self.dealer.points:
                     player.balance += player.bet * 2
                     print(f'{player.name} player win')
@@ -110,6 +123,16 @@ class Game:
         time.sleep(1)
         self.dealer.show_hand()
 
+    def show_players(self):
+        for player in self.players:
+            print(player.name, player.balance)
+            if player.balance <= 0:
+                print(f'{player.name} player has no money')
+                self.remove_player(player)
+                if isinstance(self.players, Player):
+                    print('Game over')
+                    exit(1)
+
     def start_game(self):
         message = MESSAGES.get('ask_start')
         # todo: max players count?
@@ -120,6 +143,7 @@ class Game:
         self._launching()
 
         while True:
+            self.deck = Deck()
             # ask about bet
             self.ask_bet()
 
@@ -136,11 +160,16 @@ class Game:
 
             self.check_winner()
 
-            if not self._ask_starting(MESSAGES.get('rerun')):
-                break
+            for player in self.players:
+                player.clean_hand()
 
-            # todo: change players pos
-            # todo: check all players for balance
+            self.dealer.clean_hand()
+            self.clean_freeze()
+
+            self.show_players()
+
+            if not self._ask_starting(MESSAGES.get('rerun')):
+                exit(1)
 
 
 Game.asd = 10

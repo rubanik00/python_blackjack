@@ -28,6 +28,10 @@ class AbstractPlayer(ABC):
             print(card)
         print('Full points: ', self.points)
 
+    def clean_hand(self):
+        self.hand.clear()
+        self.points = 0
+
     @abstractclassmethod
     def change_bet(self, min_bet, max_bet):
         pass
@@ -41,7 +45,7 @@ class Player(AbstractPlayer):
     def change_bet(self, min_bet, max_bet):
         while True:
             value = int(input(MESSAGES.get('ask_bet')))
-            if value < max_bet and value > min_bet:
+            if value <= max_bet and value >= min_bet:
                 self.bet = value
                 self.balance -= self.bet
                 break
