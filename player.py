@@ -15,7 +15,13 @@ class AbstractPlayer(ABC):
     def calculate_points(self):
         self.points = 0
         for card in self.hand:
-            self.points += card.points
+            if card.points == 11:
+                if self.points <= 10:
+                    self.points += 11
+                else:
+                    self.points += 1
+            else:
+                self.points += card.points
 
     def take_card(self, card):
         self.hand.append(card)
